@@ -1,0 +1,49 @@
+---
+export const prerender = false;
+
+import type { D1Database } from '@cloudflare/workers-types';
+import { getCustomersByCompany } from '../lib/d1';
+
+// Access the D1 database
+const db: D1Database = Astro.locals.runtime.env.DB;
+
+// Get filter from query param
+const url = new URL(Astro.request.url);
+const companyFilter = url.searchParams.get('company') || '';
+const customers = await getCustomersByCompany(db, companyFilter);
+---
+
+<html>
+  <head>
+    <title>Customers</title>
+  </head>
+  <body>
+    <h1>Search Customers</h1>
+    <form method="GET">
+      <input type="text" name="company" value={companyFilter} placeholder="Filter by company name" />
+      <button type="submit">Search</button>
+    </form>
+    {customers.length > 0 ? (
+      <table>
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Company Name</th>
+            <th>Contact Name</th>
+          </tr>
+        </thead>
+        <tbody>
+          {customers.map((customer) => (
+            <tr>
+              <td>{customer.CustomerId}</td>
+              <td>{customer.CompanyName}</td>
+              <td>{customer.ContactName}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    ) : (
+      <p>No customers found.</p>
+    )}
+  </body>
+</html>
